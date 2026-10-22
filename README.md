@@ -1,0 +1,58 @@
+# Random Cut Forest JSON Lab
+
+Mo hinh 3D Three.js va luong phan tich tep JSON bang Python `rrcf`.
+
+Mo ta chi tiet cac buoc tinh toan: [THUAT_TOAN.md](THUAT_TOAN.md).
+
+## Chay tren Windows / PowerShell
+
+```powershell
+npm install
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+npm run dev -- --port 5173
+```
+
+Mo http://127.0.0.1:5173. Python duoc chay tu `.venv` boi Vite middleware,
+khong can khoi dong backend rieng. Co the dat `RCF_PYTHON` de chi dinh Python khac.
+
+## Input va output
+
+Nhan mang object, object co `data` la mang, hoac ma tran so:
+
+```json
+{"data":[{"id":"a","value":20},{"id":"b","value":21},{"id":"c","value":90}]}
+```
+
+File mau: `public/sample-data.json`. Tu 3 den 2000 ban ghi, toi da 5 MB,
+tu 1 den 20 truong so. ID, timestamp, date, time, index, label la metadata.
+Khong tu dong ep chuoi/null thanh so. Truong thieu se bao loi theo so ban ghi.
+
+Luong: doc JSON -> kiem tra -> vector -> median/IQR -> forest -> mean CoDisp
+-> so sanh nguong -> ghep lai du lieu goc -> tai JSON ket qua.
+
+`POST /api/analyze` nhan `{points: number[][], config: {trees, sampleSize, threshold}}`.
+Tra NDJSON: cac event `progress`, sau do `result` hoac `error`.
+Frontend bo sung `input`, `features`, `fileName` vao ket qua xuat.
+
+Phan tich **batch**, khong la he thong streaming online. Moi lan chay tao forest
+moi voi seed 42; mau moi cay gioi han theo cau hinh. Diem ngoai mau duoc them
+tam vao cay de tinh CoDisp, sau do loai bo. Gia tri trung duoc giu lai.
+Chuan hoa duoc fit tren chinh tep hien tai. CoDisp khong phai xac suat;
+nguong do nguoi dung chon, khong phai nguong thong ke tu hieu chinh.
+Mo hinh 3D la minh hoa; so cay hien thi khong bang so cay tinh toan.
+
+Tham khao: https://klabum.github.io/rrcf/scoring-rctree.html
+
+## Kiem tra va build
+
+```powershell
+npm test
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py"
+npm run build
+npm run preview -- --port 4173
+```
+
+API co trong ca Vite dev va preview. `dist` khong chay API neu chi host tinh;
+trien khai production can backend Python/Node co xu ly process, timeout va
+gioi han request tuong tu `vite.config.mjs`.
