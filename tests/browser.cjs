@@ -24,7 +24,7 @@ async function pixels(buffer) {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   try {
-    await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://127.0.0.1:5173/rcf.html', { waitUntil: 'networkidle' });
     await page.locator('#scene canvas').waitFor();
     assert(await page.locator('#analyzeButton').isDisabled());
     await page.locator('#sampleButton').click();
@@ -44,6 +44,18 @@ async function pixels(buffer) {
     assert(result.results[48].isAnomaly && result.results[49].isAnomaly);
     assert(result.results.every((row) => row.isAnomaly === (row.score >= row.threshold)));
     assert.equal(result.results[0].input.id, 'sensor-001');
+    assert(result.treeTrace.steps.length > 1);
+    await page.locator('#treeViewButton').click();
+    assert(await page.locator('#treeExplorer').isVisible());
+    assert.equal(await page.locator('#treePlot .plot-point').count(), result.treeTrace.sampleIndices.length);
+    assert.match(await page.locator('#cutPosition').textContent(), /^1 \/ /);
+    await page.locator('#nextCut').click();
+    assert.match(await page.locator('#cutPosition').textContent(), /^2 \/ /);
+    await page.locator('#cutSlider').fill('3');
+    assert.match(await page.locator('#cutPosition').textContent(), /^4 \/ /);
+    await page.locator('#treeExplorer').screenshot({ path: 'test-artifacts/tree-desktop.png' });
+    await page.locator('#closeTreeExplorer').click();
+    assert(await page.locator('#treeExplorer').isHidden());
     await page.locator('#onlyAnomalies').check();
     assert.equal(await page.locator('#resultRows tr').count(), result.summary.anomalies);
     await page.locator('#onlyAnomalies').uncheck();
@@ -95,12 +107,15 @@ async function pixels(buffer) {
 
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
     mobile.on('pageerror', (error) => errors.push(error.message));
-    await mobile.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
+    await mobile.goto('http://127.0.0.1:5173/rcf.html', { waitUntil: 'networkidle' });
     await mobile.locator('#sampleButton').click();
     await mobile.waitForFunction(() => !document.querySelector('#analyzeButton').disabled);
     await mobile.locator('#analyzeButton').click();
     await mobile.waitForFunction(() => !document.querySelector('#downloadResult').disabled);
     assert.equal(await mobile.locator('#totalMetric').textContent(), '50');
+    await mobile.locator('#treeViewButton').click();
+    assert(await mobile.locator('#treeExplorer').isVisible());
+    await mobile.locator('#treeExplorer').screenshot({ path: 'test-artifacts/tree-mobile.png' });
     const widths = await mobile.evaluate(() => ({ width: window.innerWidth, scroll: document.documentElement.scrollWidth }));
     assert(widths.scroll <= widths.width, `Mobile overflow: ${JSON.stringify(widths)}`);
     await mobile.screenshot({ path: 'test-artifacts/mobile.png', fullPage: true });

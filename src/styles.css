@@ -12,6 +12,9 @@ button, a { color: inherit; }
 #app { display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: 100dvh; }
 .panel { position: sticky; top: 0; height: 100dvh; overflow-y: auto; padding: 26px 24px; background: #0f1b18; border-right: 1px solid #283730; scrollbar-width: thin; }
 .eyebrow { display: flex; align-items: center; gap: 9px; color: #87cbb0; font: 11px Consolas, monospace; }
+.back-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 17px; color: #a5c4b2; font-size: 11px; text-decoration: none; }
+.back-link:hover { color: #c9ebd3; }
+.back-link svg { width: 14px; height: 14px; }
 h1 { margin: 22px 0 10px; font-size: 31px; font-weight: 600; line-height: 1.13; }
 .lead { color: #9fb3aa; font-size: 14px; line-height: 1.6; margin: 0 0 28px; }
 h2 { font-size: 14px; font-weight: 600; margin: 0; }
@@ -66,6 +69,32 @@ input[type='checkbox'] { accent-color: #80cf9f; margin: 0; width: 13px; height: 
 #scene { position: absolute; inset: 0; touch-action: none; }
 #scene canvas { display: block; width: 100%; height: 100%; }
 .scene-toolbar { position: absolute; top: 14px; right: 18px; display: flex; gap: 6px; }
+.tree-view-button { min-height: 31px; padding: 5px 10px; }
+.tree-explorer { padding: 22px 28px 25px; border-bottom: 1px solid #293730; background: #111d1b; scroll-margin-top: 12px; }
+.tree-explorer-heading { align-items: flex-start; }
+.tree-explorer-heading h2 { font-size: 15px; }
+.tree-explorer-heading p { margin: 6px 0 0; color: #91a99c; font-size: 11px; }
+.tree-explorer-controls { display: flex; align-items: center; gap: 10px; margin: 20px 0 15px; }
+.tree-explorer-controls input { flex: 1; min-width: 0; accent-color: #e0ca84; }
+.tree-explorer-controls span { min-width: 44px; text-align: right; font: 11px Consolas, monospace; color: #cbd8ce; }
+.tree-explorer-body { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(210px, .8fr); gap: 24px; align-items: start; }
+.tree-plot-wrap { min-width: 0; border: 1px solid #31433a; background: #0d1716; }
+#treePlot { display: block; width: 100%; height: auto; max-height: 370px; }
+.plot-axis { stroke: #566f61; stroke-width: 1; }
+.plot-cut { stroke: #e0ca84; stroke-width: 2; stroke-dasharray: 6 5; }
+.plot-point { stroke: #111b17; stroke-width: 1; }
+.plot-outside { fill: #577064; opacity: .45; }
+.plot-left { fill: #9fe2b6; }.plot-right { fill: #ee9aa8; }
+.plot-label { fill: #98ad9f; font: 11px 'Segoe UI', sans-serif; }
+.plot-cut-label { fill: #f2d997; font: 11px Consolas, monospace; }
+.tree-cut-details { min-width: 0; color: #b6cabe; font-size: 12px; line-height: 1.6; }
+.tree-cut-details strong { display: block; color: #e5ecdf; font-size: 13px; overflow-wrap: anywhere; }
+.tree-cut-details p { margin: 10px 0; overflow-wrap: anywhere; }
+.cut-counts { display: flex; gap: 16px; margin: 15px 0; }
+.cut-counts span { display: flex; align-items: baseline; gap: 6px; color: #aac2b4; }
+.cut-counts span:first-child b { color: #a4e7bb; }.cut-counts span:last-child b { color: #f0a4b0; }
+.cut-counts b { font: 20px Consolas, monospace; }
+.tree-cut-details .tree-note { margin-top: 18px; color: #83998c; font-size: 10px; }
 .legend { position: absolute; bottom: 14px; left: 24px; display: flex; align-items: center; flex-wrap: wrap; gap: 17px; pointer-events: none; }
 .legend span { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #a7bdb1; }
 .dot { width: 5px; height: 5px; border-radius: 50%; }
@@ -114,13 +143,14 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; font: 10px/1.
 footer { border-top: 1px solid #27382b; padding: 14px 28px; color: #75907d; font-size: 9px; line-height: 1.6; }
 @keyframes blink { 50% { opacity: .3; } }
 @media (min-width: 1600px) { .stage { height: 430px; } }
-@media (max-width: 1100px) { #app { grid-template-columns: 285px minmax(0, 1fr); } .panel { padding: 24px 18px; } .pipeline { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 15px; } .stage { height: 320px; } .flow-section, .results-section { padding-left: 22px; padding-right: 22px; } .json-column { padding-left: 22px; padding-right: 22px; } }
+@media (max-width: 1100px) { #app { grid-template-columns: 285px minmax(0, 1fr); } .panel { padding: 24px 18px; } .pipeline { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 15px; } .stage { height: 320px; } .flow-section, .results-section, .tree-explorer { padding-left: 22px; padding-right: 22px; } .json-column { padding-left: 22px; padding-right: 22px; } .tree-explorer-body { grid-template-columns: 1fr; } }
 @media (max-width: 760px) {
   #app { display: block; } .panel { height: auto; position: static; padding: 22px 20px; border-right: 0; border-bottom: 1px solid #2c4033; }
   h1 { font-size: 28px; margin-top: 16px; } .lead { margin-bottom: 20px; } .theory-section { margin-top: 18px; padding-top: 18px; }
   .file-picker strong { max-width: 235px; } .readout { min-height: 85px; } .source-link { margin-top: 15px; }
   .settings-grid { grid-template-columns: 1fr 1fr 1fr; gap: 10px; } .threshold-label { grid-column: auto; }
   .workspace-header { padding: 0 20px; height: 50px; } .stage { height: 300px; } .legend { left: 20px; gap: 13px; }
+  .tree-explorer { padding: 20px; }.tree-explorer-body { gap: 12px; }.tree-explorer-controls { gap: 7px; }
   .flow-section, .results-section { padding-left: 20px; padding-right: 20px; } .metrics > div { padding: 0 8px; }.metrics strong { font-size: 23px; }
   .metrics span { font-size: 9px; } .json-section { grid-template-columns: 1fr; }.json-column:first-child { border-right: 0; border-bottom: 1px solid #293b2e; }
   .json-column { padding: 20px; } .results-heading { align-items: flex-start; } .secondary-button { font-size: 10px; min-height: 34px; padding: 8px 10px; }

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b1413" />
+    <title>Random Cut Forest · JSON Lab</title>
+  </head>
+  <body>
+    <div id="app">
+      <aside class="panel">
+        <div class="eyebrow"><i data-lucide="workflow"></i> RCF / DATA LAB</div>
+        <a class="back-link" href="/"><i data-lucide="arrow-left"></i> Trang chủ</a>
+        <h1>Random Cut Forest</h1>
+        <p class="lead">Từ một tệp JSON đến các điểm dữ liệu bất thường.</p>
+
+        <section class="input-section" aria-labelledby="inputTitle">
+          <div class="section-heading"><h2 id="inputTitle">Dữ liệu đầu vào</h2><span class="local-badge">LOCAL</span></div>
+          <label class="file-picker" id="dropZone">
+            <i data-lucide="file-json-2"></i>
+            <span><strong id="fileName">Chọn tệp JSON</strong><small id="fileMeta">Tối đa 5 MB · 2.000 bản ghi</small></span>
+            <input id="fileInput" type="file" accept=".json,application/json" aria-label="Chọn tệp JSON" />
+            <i data-lucide="upload"></i>
+          </label>
+          <div class="file-actions">
+            <button id="sampleButton" class="text-button"><i data-lucide="flask-conical"></i>Dùng dữ liệu mẫu</button>
+            <a href="/sample-data.json" download class="icon-button" title="Tải tệp JSON mẫu" aria-label="Tải tệp JSON mẫu"><i data-lucide="download"></i></a>
+          </div>
+          <div id="fieldSection" hidden>
+            <h3>Trường phân tích</h3>
+            <div id="fieldChoices" class="field-choices"></div>
+          </div>
+          <div class="settings-grid">
+            <label>Số cây<select id="trees"><option>16</option><option selected>32</option><option>64</option></select></label>
+            <label>Mẫu / cây<select id="sampleSize"><option>64</option><option selected>128</option><option>256</option></select></label>
+            <label class="threshold-label">Ngưỡng CoDisp<input id="threshold" type="number" value="10" min="0.1" max="10000" step="0.1" /></label>
+          </div>
+          <button id="analyzeButton" class="primary-button" disabled><i data-lucide="play"></i><span>Phân tích JSON</span></button>
+          <p id="inputStatus" class="input-status" role="status" aria-live="polite">Chưa có tệp dữ liệu.</p>
+          <p id="errorMessage" class="error-message" role="alert" hidden></p>
+        </section>
+
+        <section class="theory-section">
+          <h2>Cơ chế xử lý</h2>
+          <div class="controls" aria-label="Chọn lớp mô phỏng">
+            <button class="mode is-active" data-mode="stream" aria-pressed="true">01 / JSON</button>
+            <button class="mode" data-mode="cut" aria-pressed="false">02 / Random cuts</button>
+            <button class="mode" data-mode="score" aria-pressed="false">03 / CoDisp</button>
+            <button class="mode" data-mode="deploy" aria-pressed="false">04 / Kết quả</button>
+          </div>
+          <div class="readout" aria-live="polite"><h3 id="modeTitle"></h3><p id="modeText"></p></div>
+        </section>
+        <a class="source-link" href="https://klabum.github.io/rrcf/scoring-rctree.html" target="_blank" rel="noreferrer">Thuật toán & CoDisp <i data-lucide="arrow-up-right"></i></a>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-header"><span><i data-lucide="box"></i> Luồng dữ liệu / 3D</span><span id="runBadge" class="status-badge">Chờ dữ liệu</span></header>
+        <section class="stage" aria-label="Mô hình 3D luồng xử lý Random Cut Forest">
+          <div id="scene"></div>
+          <div class="scene-toolbar">
+            <button id="treeViewButton" class="secondary-button tree-view-button" disabled><i data-lucide="git-branch"></i><span>Xem cây</span></button>
+            <button id="pauseScene" class="icon-button" title="Tạm dừng chuyển động" aria-label="Tạm dừng chuyển động"><i data-lucide="pause"></i></button>
+            <button id="resetScene" class="icon-button" title="Đặt lại góc nhìn" aria-label="Đặt lại góc nhìn"><i data-lucide="rotate-ccw"></i></button>
+          </div>
+          <div id="sceneFallback" hidden>Không khởi tạo được WebGL. Luồng phân tích JSON vẫn sẵn sàng.</div>
+          <div class="legend"><span><i class="dot normal"></i>Bình thường</span><span><i class="dot anomaly"></i>Bất thường</span><span><i class="dot cut"></i>Random cut</span></div>
+        </section>
+
+        <section id="treeExplorer" class="tree-explorer" aria-labelledby="treeExplorerTitle" hidden>
+          <div class="section-heading tree-explorer-heading">
+            <div><h2 id="treeExplorerTitle">Cây RCF số 1 · các nhánh cắt</h2><p id="treeExplorerMeta"></p></div>
+            <button id="closeTreeExplorer" class="icon-button" title="Đóng mô phỏng cây" aria-label="Đóng mô phỏng cây"><i data-lucide="x"></i></button>
+          </div>
+          <div class="tree-explorer-controls">
+            <button id="previousCut" class="icon-button" title="Nhánh trước" aria-label="Nhánh trước"><i data-lucide="chevron-left"></i></button>
+            <input id="cutSlider" type="range" min="0" max="0" value="0" aria-label="Chọn nhánh cắt" />
+            <button id="nextCut" class="icon-button" title="Nhánh tiếp theo" aria-label="Nhánh tiếp theo"><i data-lucide="chevron-right"></i></button>
+            <span id="cutPosition">0 / 0</span>
+          </div>
+          <div class="tree-explorer-body">
+            <div class="tree-plot-wrap"><svg id="treePlot" viewBox="0 0 700 330" role="img" aria-label="Phân chia điểm tại nhánh đang chọn"></svg></div>
+            <div class="tree-cut-details">
+              <strong id="cutPath"></strong>
+              <p id="cutRule"></p>
+              <div class="cut-counts"><span>Trái <b id="leftCount"></b></span><span>Phải <b id="rightCount"></b></span></div>
+              <p id="cutProbability"></p>
+              <p class="tree-note">Đây là các nhánh thật của cây đầu tiên trong forest. Đồ thị chiếu lên 2 chiều để quan sát; mô hình vẫn tính trên toàn bộ trường số đã chọn.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="flow-section" aria-labelledby="flowTitle">
+          <div class="section-heading"><h2 id="flowTitle">Từ tệp đến kết quả</h2><span id="flowProgress">0 / 6 bước</span></div>
+          <ol class="pipeline" id="pipeline">
+            <li data-step="0"><span class="step-number">01</span><strong>Đọc JSON</strong><small id="stepRead">Mảng bản ghi</small></li>
+            <li data-step="1"><span class="step-number">02</span><strong>Kiểm tra</strong><small id="stepValidate">Trường số hợp lệ</small></li>
+            <li data-step="2"><span class="step-number">03</span><strong>Chuẩn hóa</strong><small>Median / IQR</small></li>
+            <li data-step="3"><span class="step-number">04</span><strong>Tạo forest</strong><small id="stepForest">32 random cut trees</small></li>
+            <li data-step="4"><span class="step-number">05</span><strong>Tính CoDisp</strong><small id="stepScore">Trung bình các cây</small></li>
+            <li data-step="5"><span class="step-number">06</span><strong>Trả kết quả</strong><small>Score + trạng thái</small></li>
+          </ol>
+          <progress id="analysisProgress" max="100" value="0" aria-label="Tiến độ phân tích"></progress>
+          <p class="flow-description" id="flowDescription">Một object trở thành một vector số. Forest chấm điểm từng vector rồi ghép kết quả với bản ghi gốc.</p>
+        </section>
+
+        <section class="results-section" aria-labelledby="resultsTitle">
+          <div class="section-heading results-heading"><div><h2 id="resultsTitle">Kết quả phân tích</h2><p id="resultMeta">Chưa có kết quả</p></div><button id="downloadResult" class="secondary-button" disabled><i data-lucide="download"></i>Xuất JSON</button></div>
+          <div class="metrics">
+            <div><span>Bản ghi</span><strong id="totalMetric">—</strong></div>
+            <div><span>Bình thường</span><strong id="normalMetric">—</strong></div>
+            <div class="anomaly-metric"><span>Bất thường</span><strong id="anomalyMetric">—</strong></div>
+            <div><span>CoDisp cao nhất</span><strong id="scoreMetric">—</strong></div>
+          </div>
+          <div id="emptyResult" class="empty-result"><i data-lucide="scan-line"></i><span>Chưa có bản ghi được chấm điểm</span></div>
+          <div id="resultContent" hidden>
+            <div class="table-toolbar"><label><input type="checkbox" id="onlyAnomalies" />Chỉ bất thường</label><span>Score cao trước</span></div>
+            <div class="table-scroll"><table><thead><tr><th>Bản ghi</th><th>Vector đầu vào</th><th>CoDisp</th><th>Kết luận</th></tr></thead><tbody id="resultRows"></tbody></table></div>
+            <div class="pagination"><span id="pageInfo"></span><div><button id="prevPage" class="icon-button" title="Trang trước" aria-label="Trang trước"><i data-lucide="chevron-left"></i></button><button id="nextPage" class="icon-button" title="Trang tiếp" aria-label="Trang tiếp"><i data-lucide="chevron-right"></i></button></div></div>
+            <p class="score-note">Score là CoDisp trung bình, không phải xác suất. Bất thường khi score ≥ ngưỡng đã chọn. Tệp được phân tích theo batch, không xét thứ tự thời gian.</p>
+          </div>
+        </section>
+
+        <section class="json-section" aria-label="Dữ liệu JSON đầu vào và kết quả">
+          <div class="json-column"><div class="section-heading"><h2>JSON đầu vào</h2><span id="inputPreviewMeta">Chưa có tệp</span></div><pre id="inputPreview">[]</pre></div>
+          <div class="json-column"><div class="section-heading"><h2>JSON trả về</h2><span id="outputPreviewMeta">Chưa có kết quả</span></div><pre id="outputPreview">{ "results": [] }</pre></div>
+        </section>
+        <footer>JSON Lab · RRCF / batch analysis · Dữ liệu chỉ được xử lý trên máy này.</footer>
+      </main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

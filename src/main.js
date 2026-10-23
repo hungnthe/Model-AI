@@ -1,10 +1,11 @@
 import './styles.css';
-import { createIcons, Workflow, FileJson2, Upload, FlaskConical, Download, Play, Pause, ArrowUpRight, Box, RotateCcw, ScanLine, ChevronLeft, ChevronRight } from 'lucide';
+import { createIcons, Workflow, FileJson2, Upload, FlaskConical, Download, Play, Pause, ArrowUpRight, ArrowLeft, Box, RotateCcw, ScanLine, ChevronLeft, ChevronRight, GitBranch, X } from 'lucide';
 import { parseDataset, toPoints, readAnalysis, MAX_FILE_BYTES } from './dataset.js';
 import { createScene } from './scene.js';
+import { renderTreeStep } from './tree-explorer.js';
 
 const $ = (selector) => document.querySelector(selector);
-const icons = { Workflow, FileJson2, Upload, FlaskConical, Download, Play, Pause, ArrowUpRight, Box, RotateCcw, ScanLine, ChevronLeft, ChevronRight };
+const icons = { Workflow, FileJson2, Upload, FlaskConical, Download, Play, Pause, ArrowUpRight, ArrowLeft, Box, RotateCcw, ScanLine, ChevronLeft, ChevronRight, GitBranch, X };
 const drawIcons = () => createIcons({ icons });
 let scene;
 try { scene = createScene($('#scene')); }
@@ -27,6 +28,7 @@ let busy = false;
 let page = 0;
 let selectedRow;
 let fileVersion = 0;
+let treeStep = 0;
 const pageSize = 8;
 
 function updateMode(mode) {
@@ -53,6 +55,10 @@ function setFlow(done, active = -1, progress = done / 6 * 100) {
 function selectedFields() { return [...document.querySelectorAll('#fieldChoices input:checked')].map((input) => input.value); }
 function clearResult() {
   result = undefined;
+  treeStep = 0;
+  $('#treeExplorer').hidden = true;
+  $('#treeViewButton').disabled = true;
+  $('#treeViewButton span').textContent = 'Xem cây';
   page = 0;
   selectedRow = undefined;
   $('#downloadResult').disabled = true;
@@ -144,6 +150,7 @@ function setBusy(value) {
   for (const selector of ['#fileInput', '#sampleButton', '#trees', '#sampleSize', '#threshold']) $(selector).disabled = value;
   document.querySelectorAll('#fieldChoices input').forEach((input) => { input.disabled = value; });
   $('#analyzeButton').disabled = value || !dataset;
+  $('#treeViewButton').disabled = value || !result?.treeTrace?.steps.length;
   $('#analyzeButton span').textContent = value ? 'Đang phân tích…' : 'Phân tích JSON';
   if (value) {
     $('#runBadge').textContent = 'Đang tính toán';
@@ -230,6 +237,9 @@ async function analyze() {
       features: fields,
       results: data.results.map((row) => ({ ...row, input: dataset.rows[row.rowIndex], threshold: config.threshold })),
     };
+    $('#treeViewButton').disabled = !result.treeTrace?.steps.length;
+    $('#treeExplorerMeta').textContent = `${result.treeTrace.sampleIndices.length} điểm được lấy mẫu · ${result.treeTrace.steps.length} nhánh đầu theo thứ tự tầng`;
+    $('#cutSlider').max = Math.max(0, result.treeTrace.steps.length - 1);
     $('#totalMetric').textContent = result.summary.total;
     $('#normalMetric').textContent = result.summary.normal;
     $('#anomalyMetric').textContent = result.summary.anomalies;
@@ -275,6 +285,24 @@ for (const selector of ['#trees', '#sampleSize', '#threshold']) $(selector).addE
   $('#stepForest').textContent = `${$('#trees').value} random cut trees`;
 });
 $('#analyzeButton').addEventListener('click', analyze);
+$('#treeViewButton').addEventListener('click', () => {
+  if (!result?.treeTrace?.steps.length) return;
+  const explorer = $('#treeExplorer');
+  explorer.hidden = !explorer.hidden;
+  $('#treeViewButton span').textContent = explorer.hidden ? 'Xem cây' : 'Ẩn cây';
+  if (!explorer.hidden) {
+    renderTreeStep(explorer, result, treeStep);
+    explorer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+});
+$('#closeTreeExplorer').addEventListener('click', () => {
+  $('#treeExplorer').hidden = true;
+  $('#treeViewButton span').textContent = 'Xem cây';
+  $('#treeViewButton').focus();
+});
+$('#previousCut').addEventListener('click', () => { treeStep -= 1; renderTreeStep($('#treeExplorer'), result, treeStep); });
+$('#nextCut').addEventListener('click', () => { treeStep += 1; renderTreeStep($('#treeExplorer'), result, treeStep); });
+$('#cutSlider').addEventListener('input', (event) => { treeStep = Number(event.target.value); renderTreeStep($('#treeExplorer'), result, treeStep); });
 $('#onlyAnomalies').addEventListener('change', () => { page = 0; renderTable(); });
 $('#prevPage').addEventListener('click', () => { page -= 1; renderTable(); });
 $('#nextPage').addEventListener('click', () => { page += 1; renderTable(); });

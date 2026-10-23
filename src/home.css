@@ -1,0 +1,23 @@
+:root { font-family: 'Segoe UI', Arial, sans-serif; color: #ebf3ed; background: #101a18; font-synthesis: none; letter-spacing: 0; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+svg { width: 22px; height: 22px; stroke-width: 1.6; }
+.home { display: flex; flex-direction: column; min-height: 100dvh; }
+.home-header { display: flex; justify-content: space-between; gap: 20px; padding: 25px 5vw; border-bottom: 1px solid #34453b; color: #9ecbb1; font: 11px Consolas, monospace; }
+.home-header span:last-child { color: #788d83; }
+.home-content { width: min(760px, calc(100% - 40px)); margin: auto; padding: 52px 0 68px; }
+.home-kicker { margin: 0 0 18px; color: #8bc6a5; font: 11px Consolas, monospace; }
+h1 { margin: 0; font-size: clamp(28px, 4vw, 44px); font-weight: 600; line-height: 1.18; }
+.home-intro { max-width: 590px; margin: 17px 0 48px; color: #a5b9ac; font-size: 15px; line-height: 1.7; }
+.model-list { border-top: 1px solid #405246; }
+.model-link { display: flex; align-items: center; gap: 20px; min-height: 110px; padding: 18px 8px; border-bottom: 1px solid #405246; color: inherit; text-decoration: none; transition: background .2s, padding .2s; }
+.model-link:hover, .model-link:focus-visible { background: #1b2b23; padding-left: 18px; outline: none; }
+.model-link:focus-visible { box-shadow: inset 0 0 0 2px #9fe0b5; }
+.model-icon { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; flex: 0 0 auto; border: 1px solid #486351; border-radius: 6px; color: #a9e4bc; background: #1b3427; }
+.model-icon.isolation-icon { color: #ead49c; border-color: #696044; background: #312c20; }
+.model-copy { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.model-copy strong { font-size: 18px; font-weight: 600; }
+.model-copy small { color: #91a79a; font-size: 12px; line-height: 1.5; }
+.model-link > svg { width: 18px; height: 18px; margin-left: auto; flex: 0 0 auto; color: #a1c4aa; }
+.home-footer { border-top: 1px solid #34453b; padding: 16px 5vw; color: #718e7b; font-size: 11px; }
+@media (max-width: 480px) { .home-header { padding: 20px; } .home-header span:last-child { display: none; } .home-content { padding: 42px 0 60px; } .home-intro { margin-bottom: 35px; font-size: 14px; } .model-link { gap: 13px; min-height: 96px; } .model-icon { width: 42px; height: 42px; } .model-copy strong { font-size: 15px; } .model-copy small { font-size: 11px; } }

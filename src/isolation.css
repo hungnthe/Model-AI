@@ -1,0 +1,27 @@
+.isolation-app .panel { background: #191d19; border-right-color: #3a4134; }
+.isolation-app .eyebrow, .isolation-app .local-badge { color: #dccb92; }
+.isolation-app .file-picker { background: #25291f; border-color: #726b48; }
+.isolation-app .file-picker:hover, .isolation-app .file-picker.is-dragover { background: #303425; border-color: #e0d297; }
+.isolation-app .file-picker > svg:first-child { color: #dfd098; }
+.isolation-app .field-choices input, .isolation-app input[type='checkbox'] { accent-color: #dec779; }
+.isolation-app .primary-button { background: #e2cb85; border-color: #e2cb85; color: #272519; }
+.isolation-app .primary-button:hover:not(:disabled) { background: #f1dfa6; }
+.isolation-app .readout { border-left-color: #ddc886; }
+.isolation-app .mode.is-active { border-color: #ddc886; }
+.isolation-workspace { background: #141918; }
+.isolation-workspace .workspace-header { background: #171c19; }
+.iso-visual { min-height: 430px; padding-top: 25px; padding-bottom: 29px; background: #1a211e; }
+.visual-key { display: inline-flex; align-items: center; gap: 7px; color: #a6b5a5; font-size: 10px; white-space: nowrap; }
+.visual-key .dot { margin-left: 8px; }
+.iso-empty { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 315px; color: #899d8e; font-size: 12px; }
+.iso-empty svg { width: 26px; height: 26px; color: #d5c084; }
+.iso-visual .tree-explorer-controls { margin-top: 24px; }
+.iso-visual .tree-explorer-body { grid-template-columns: minmax(0, 1.7fr) minmax(240px, .7fr); }
+.iso-visual .tree-plot-wrap { background: #111916; border-color: #3f483b; }
+.iso-flow { padding-top: 21px; }
+.iso-pipeline { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.isolation-app .metrics .anomaly-metric strong { color: #efa1ac; }
+.isolation-app table { min-width: 570px; }
+.isolation-app td:nth-child(2) { max-width: 275px; }
+@media (max-width: 1100px) { .iso-visual .tree-explorer-body { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .isolation-app .panel { border-right: 0; border-bottom: 1px solid #444538; } .iso-visual { min-height: 390px; } .iso-empty { min-height: 250px; } .visual-key { display: none; } .iso-pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

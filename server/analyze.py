@@ -58,12 +58,33 @@ def normalize(matrix):
     return normalized, center, scale
 
 
+def trace_tree(tree, sample_indices, points, limit=24):
+    steps = []
+    queue = [(tree.root, [int(index) for index in sample_indices], "Goc")]
+    while queue and len(steps) < limit:
+        node, indices, path = queue.pop(0)
+        if not isinstance(node, rrcf.Branch):
+            continue
+        dimension = int(node.q)
+        cut = float(node.p)
+        left = [index for index in indices if points[index, dimension] <= cut]
+        right = [index for index in indices if points[index, dimension] > cut]
+        steps.append({
+            "path": path, "dimension": dimension, "cut": cut,
+            "indices": indices, "leftIndices": left, "rightIndices": right,
+        })
+        queue.append((node.l, left, path + " / Trai"))
+        queue.append((node.r, right, path + " / Phai"))
+    return {"sampleIndices": [int(index) for index in sample_indices], "steps": steps}
+
+
 def score_forest(points, trees, sample_size, notify):
     count = len(points)
     actual_sample = min(sample_size, count)
     scores = np.zeros(count, dtype=np.float64)
     random = np.random.RandomState(42)
     forest = []
+    first_tree_trace = None
     notify({"type": "progress", "stage": "forest", "completed": 0, "total": trees})
     for tree_number in range(trees):
         indices = random.choice(count, size=actual_sample, replace=False)
@@ -71,6 +92,8 @@ def score_forest(points, trees, sample_size, notify):
         for index in indices:
             tree.insert_point(points[index], index=int(index))
         forest.append(tree)
+        if tree_number == 0:
+            first_tree_trace = trace_tree(tree, indices, points)
         notify({"type": "progress", "stage": "forest", "completed": tree_number + 1, "total": trees})
 
     for tree_number, tree in enumerate(forest):
@@ -83,7 +106,7 @@ def score_forest(points, trees, sample_size, notify):
                 tree.forget_point(index)
         notify({"type": "progress", "stage": "score", "completed": tree_number + 1, "total": trees})
 
-    return scores / trees, actual_sample
+    return scores / trees, actual_sample, first_tree_trace
 
 
 def analyze(payload, notify=lambda event: None):
@@ -92,7 +115,7 @@ def analyze(payload, notify=lambda event: None):
     normalized, center, scale = normalize(matrix)
     notify({"type": "progress", "stage": "normalize", "completed": 0, "total": trees})
     count = len(matrix)
-    scores, actual_sample = score_forest(normalized, trees, sample_size, notify)
+    scores, actual_sample, tree_trace = score_forest(normalized, trees, sample_size, notify)
     flagged = scores >= threshold
     return {
         "summary": {
@@ -110,6 +133,7 @@ def analyze(payload, notify=lambda event: None):
             "method": "(x - median) / IQR; zero IQR uses scale 1",
             "median": center.tolist(), "scale": scale.tolist(),
         },
+        "treeTrace": tree_trace,
         "results": [
             {"rowIndex": i, "vector": matrix[i].tolist(),
              "normalizedVector": normalized[i].tolist(),

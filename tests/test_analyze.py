@@ -32,6 +32,21 @@ class AnalysisTests(unittest.TestCase):
         self.assertTrue(all(np.isfinite(row["score"]) for row in result["results"]))
         self.assertEqual(result["configuration"]["sampleSize"], 64)
 
+    def test_first_tree_trace_partitions_its_sample(self):
+        points = np.random.RandomState(12).normal(size=(80, 3)).tolist()
+        result = analyze({"points": points, "config": {"trees": 16, "sampleSize": 64}})
+        trace = result["treeTrace"]
+        self.assertEqual(len(trace["sampleIndices"]), 64)
+        self.assertTrue(trace["steps"])
+        self.assertEqual(set(trace["steps"][0]["indices"]), set(trace["sampleIndices"]))
+        for step in trace["steps"]:
+            left = set(step["leftIndices"])
+            right = set(step["rightIndices"])
+            self.assertFalse(left & right)
+            self.assertEqual(left | right, set(step["indices"]))
+            self.assertTrue(all(result["results"][i]["normalizedVector"][step["dimension"]] <= step["cut"] for i in left))
+            self.assertTrue(all(result["results"][i]["normalizedVector"][step["dimension"]] > step["cut"] for i in right))
+
     def test_invalid_values_and_configuration(self):
         for points in ([[1], [2]], [[1], [2, 3], [4]], [[1], [True], [2]], [[1], [None], [2]], [[1], [float('inf')], [2]]):
             with self.assertRaises(ValueError):

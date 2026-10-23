@@ -10,7 +10,9 @@ const localPython = path.join(root, '.venv', process.platform === 'win32' ? 'Scr
 function analysisApi() {
   let activeJobs = 0;
   function middleware(req, res, next) {
-    if (req.url?.split('?')[0] !== '/api/analyze') return next();
+    const route = req.url?.split('?')[0];
+    const script = route === '/api/analyze' ? 'analyze.py' : route === '/api/isolation-forest' ? 'isolation_forest.py' : null;
+    if (!script) return next();
     if (req.method !== 'POST') {
       res.writeHead(405, { Allow: 'POST' });
       return res.end();
@@ -45,7 +47,7 @@ function analysisApi() {
         return res.end(JSON.stringify({ error: 'JSON không hợp lệ.' }));
       }
       const python = process.env.RCF_PYTHON || (existsSync(localPython) ? localPython : 'python');
-      const child = spawn(python, ['-u', path.join(root, 'server/analyze.py')], {
+      const child = spawn(python, ['-u', path.join(root, 'server', script)], {
         cwd: root, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
       });
       activeJobs += 1;
@@ -91,5 +93,14 @@ function analysisApi() {
 
 export default defineConfig({
   plugins: [analysisApi()],
+  build: {
+    rollupOptions: {
+      input: {
+        home: path.join(root, 'index.html'),
+        rcf: path.join(root, 'rcf.html'),
+        isolationForest: path.join(root, 'isolation-forest.html'),
+      },
+    },
+  },
   server: { watch: { ignored: ['**/.venv/**', '**/test-artifacts/**'] } },
 });
